@@ -194,8 +194,8 @@ curve(sigmoid(x), from = -10, to = 10, col = "red")
 # how wrong we are overall.
 
 
-# First, let's write a function to take our input, run it through the net, and
-# predict the labels of each input
+# First, let's write a function to take our input, run it through the net
+# ("forward propagation"), and predict the labels of each input
 
 predict <- function(params, X) {
     
@@ -364,7 +364,9 @@ compute_grad(init_params, Xtrain, ytrain, 1)
 lambda <- 1
 
 # We train the network by minimising the cost function - which we achieve by
-# adjusting the network's parameters. We use R's "optim" function:
+# adjusting the network's parameters. We use R's "optim" function, and some
+# "anonymous functions" (basically, compute_cost and compute_grad with 3 of the
+# inputs fixed) as arguments:
 
 optim_out <- optim(init_params,
                    function(x) compute_cost(x, Xtrain, ytrain, lambda),
