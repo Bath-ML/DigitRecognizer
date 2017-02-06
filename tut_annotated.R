@@ -18,7 +18,7 @@
 # Owen Jones | Bath Machine Learning Meetup
 
 
-#### Slides 1-3 ####
+### Slides 1-3 ###
 
 
 #===============================================================================
@@ -26,7 +26,7 @@
 #===============================================================================
 
 
-#### Slide 4 ####
+### Slide 4 ###
 
 
 # Kaggle competition:
@@ -53,7 +53,7 @@ head(train)
 # Woah OK, lots of info!
 
 
-#### Slides 5-8 ####
+### Slides 5-8 ###
 
 
 # First column is the label (0 to 9) of what the image is. Next 784 columns are
@@ -92,7 +92,7 @@ train <- train[, -1]
 # We'll make a couple of adjustments to make later calculations work better!
 
 
-#### Slides 9-11 ####
+### Slides 9-11 ###
 
 
 #@ 1 == 1, 1 == 2, 1 >= 2, "R" > "Python" 
@@ -118,7 +118,7 @@ range(train)
 # hyper-parameters) and a test set (for evaluating overall performance)
 
 
-#### Slides 12-13 ####
+### Slides 12-13 ###
 
 ytrain <- labels[1:25200]
 Xtrain <- train[1:25200, ]
@@ -174,7 +174,7 @@ visualise(Xtrain[50, ])
 #===============================================================================
 
 
-#### Slides 14-19 ####
+### Slides 14-19 ###
 
 
 # We're going to build a fully-connected, single-hidden-layer network. There are
@@ -238,7 +238,7 @@ thetas[[2]]
 #===============================================================================
 
 
-#### Slides 20-21 ####
+### Slides 20-21 ###
 
 
 # Question: OK, so we can do some sums - but how do we interpret the results as
@@ -334,7 +334,7 @@ sprintf("Accuracy: %.1f%%", sum(preds == yval) / length(yval) * 100)
 #===============================================================================
 
 
-#### Slides 22-24 ####
+### Slides 22-24 ###
 
 #@ Diag
 
@@ -464,7 +464,7 @@ optim_out <- optim(init_params,
                    control = list(maxit = 50))
 
 
-#### Slides 25- ####
+### Slides 25- ###
 
 
 # optim returns several outputs in a list. The first is the optimised
