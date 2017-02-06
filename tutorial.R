@@ -51,6 +51,12 @@ head(train)
 # All info is numeric so let's turn the data frame into a matrix
 train <- as.matrix(train)
 
+# If we look at the first column (the labels) the set already seems to be 
+# shuffled (i.e. not all the zero images, followed by all the ones, followed by
+# all the twos etc.) but to be on the safe side we'll shuffle it anyway!
+
+train <- train[sample(1:42000), ]
+
 # Let's separate the labels from the image data
 labels <- train[, 1]
 train <- train[, -1]
@@ -109,7 +115,8 @@ visualise <- function(imgvec) {
     imgmelt <- melt(img)
     
     ggplot(imgmelt, aes(x = Var1, y = -Var2, fill = value)) +
-        geom_raster()
+        geom_raster() +
+        scale_fill_gradient(low = "white", high = "black")
 }
 
 # Now let's have a proper look at some of our data
@@ -137,6 +144,7 @@ visualise(Xtrain[50, ])
 
 # Choose a small value to define a range for initial values (this one seems to
 # work well!)
+# sqrt(6) / (sqrt(input_layer_size) + sqrt(output_layer_size))
 epsilon <- sqrt(6) / (sqrt(784) + sqrt(10))
 
 # Number of parameters in each matrix
@@ -275,9 +283,9 @@ compute_cost <- function(params, X, y, lambda) {
     J <- sum(-log(A3) * Actual + -log(1 - A3) * (1 - Actual)) / m
     
     # Add regularisation term: we want weights to be small (to prevent
-    # overfitting), we add the average "squared weight" to discourage large
+    # overfitting), we add an averaged "squared weight" to discourage large
     # positive/negative weights. The effect of this term is scaled by lambda -
-    # higher lambda penalises large weights more heavily
+    # higher lambda penalises large weights more heavily.
     J <- J + lambda * (sum(Theta1[, -1] ^ 2) + sum(Theta2[, -1] ^ 2)) / (2*m)
     
     J
@@ -390,7 +398,7 @@ sprintf("Accuracy: %.1f%%", sum(preds == yval) / length(yval) * 100)
 
 
 # We can have a look at what features the network has learned to look for
-Theta1 <- make_mats(nn_params)[[1]]
+Theta1 <- make_thetas(nn_params)[[1]]
 
 visualise(Theta1[1, ])
 visualise(Theta1[16, ])
