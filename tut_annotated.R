@@ -18,10 +18,16 @@
 # Owen Jones | Bath Machine Learning Meetup
 
 
+#### Slides 1-3 ####
+
 
 #===============================================================================
 # Section 0: Getting the data, installing packages ----
 #===============================================================================
+
+
+#### Slide 4 ####
+
 
 # Kaggle competition:
 "https://www.kaggle.com/c/digit-recognizer"
@@ -45,6 +51,11 @@ train <- read.csv("~/Coding/DigitRecognizer/data/train.csv")
 head(train)
 
 # Woah OK, lots of info!
+
+
+#### Slides 5-8 ####
+
+
 # First column is the label (0 to 9) of what the image is. Next 784 columns are
 # pixel intensity values for the "unrolled" 28x28 image.
 
@@ -52,13 +63,35 @@ head(train)
 train <- as.matrix(train)
 
 # Let's separate the labels from the image data
+
+#@ Indexing demo
+P <- matrix(1:9, 3, 3) #@ matrix(1:9, 3)
+P
+P[2, 3]
+P[1, ]
+P[, 1]
+
 labels <- train[, 1]
 train <- train[, -1]
 
 # We'll make a couple of adjustments to make later calculations work better!
 
+
+#### Slides 9-11 ####
+
+
+#@ 1 == 1, 1 == 2, 1 >= 2, "R" > "Python" 
+
+#@ " or '
+
+c(1, 2, 3) == c(1, 4, 3)
+
+c(1, 2, 3)[c(FALSE, TRUE, TRUE)]
+
+
 # First we'll re-label "0" as "10":
 labels[labels == 0] <- 10
+
 
 # And we'll rescale pixel intensity from 0 to 1, instead of 0 to 255:
 range(train)
@@ -68,6 +101,10 @@ range(train)
 # Now we'll split the examples in a 60:20:20 ratio: a training set, a
 # cross-validation set (for evaluating performance and adjusting
 # hyper-parameters) and a test set (for evaluating overall performance)
+
+
+#### Slides 12-13 ####
+
 
 ytrain <- labels[1:25200]
 Xtrain <- train[1:25200, ]
@@ -93,9 +130,8 @@ library(reshape2)
 library(ggplot2)
 
 # Quick demo of melt
-A <- matrix(1:9, 3)
-A
-melt(A)
+P
+melt(P)
 
 # Let's make our function!
 
@@ -122,6 +158,10 @@ visualise(Xtrain[50, ])
 # Section 3: Network structure and parameters ----
 #===============================================================================
 
+
+#### Slides 14-19 ####
+
+
 # We're going to build a fully-connected, single-hidden-layer network. There are
 # three layers in total:
 # * The "input" layer is our 784 pixels
@@ -140,6 +180,9 @@ visualise(Xtrain[50, ])
 epsilon <- sqrt(6) / (sqrt(784) + sqrt(10))
 
 # Number of parameters in each matrix
+
+#@ Add a bias unit!
+
 n1 <- 785*25
 n2 <- 26*10
 
@@ -148,6 +191,13 @@ init_params <- runif((n1+n2), min = -epsilon, max = epsilon)
 
 # It will save time if we write a small function to reshape these parameters
 # into matrices, rather than doing it by hand each time
+
+#@ Lists
+
+Q <- list(10, "b", P)
+Q[1]
+Q[[1]]
+
 
 make_thetas <- function(paramvec) {
     
@@ -169,6 +219,10 @@ thetas[[2]]
 #===============================================================================
 # Section 4: Forward propagation and making predictions ----
 #===============================================================================
+
+
+#### Slides 20-21 ####
+
 
 # Question: OK, so we can do some sums - but how do we interpret the results as
 # a meaningful output?
@@ -196,6 +250,14 @@ curve(sigmoid(x), from = -10, to = 10, col = "red")
 
 # First, let's write a function to take our input, run it through the net
 # ("forward propagation"), and predict the labels of each input
+
+#@ * vs %*%
+
+P * P
+P %*% P
+
+#@ dim()
+
 
 predict <- function(params, X) {
     
@@ -251,6 +313,17 @@ sprintf("Accuracy: %.1f%%", sum(preds == yval) / length(yval) * 100)
 # Section 5: Cost function ----
 #===============================================================================
 
+
+#### Slides 22-24 ####
+
+#@ Reordering columns
+
+P[c(3, 1, 2), ]
+
+#@ Diag
+
+diag(3)
+
 # OK, so, how do we measure how wrong each prediction was, and how wrong we were
 # overall? We quantify the error with a "cost"...
 
@@ -272,7 +345,7 @@ compute_cost <- function(params, X, y, lambda) {
     # Compute the average "difference" between the prediction (the row of A3)
     # and the expected value (the row of Actual). We use log so that as we are
     # further away from correct, the cost becomes exponentially higher.
-    J <- sum(-log(A3) * Actual + -log(1 - A3) * (1 - Actual)) / m
+    J <- sum(-log(A3)*Actual + -log(1 - A3)*(1 - Actual)) / m
     
     # Add regularisation term: we want weights to be small (to prevent
     # overfitting), we add the average "squared weight" to discourage large
@@ -373,6 +446,10 @@ optim_out <- optim(init_params,
                    function(x) compute_grad(x, Xtrain, ytrain, lambda),
                    method = "L-BFGS-B",
                    control = list(maxit = 50))
+
+
+#### Slides 25- ####
+
 
 # optim returns several outputs in a list. The first is the optimised
 # parameters:
