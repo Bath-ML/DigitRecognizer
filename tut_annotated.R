@@ -193,15 +193,20 @@ visualise(Xtrain[50, ])
 # Choose a small value to define a range for initial values (this one seems to
 # work well!)
 
-#@ sqrt(6) / (sqrt(input_layer_size) + sqrt(output_layer_size))
+#@ sqrt(6) / (sqrt(input_size) + sqrt(output_size))
 epsilon <- sqrt(6) / (sqrt(784) + sqrt(10))
 
-# Number of parameters in each matrix
+# We'll set a "hyper-parameter" for the number of neurons in the hidden layer,
+# so we can adjust it later if we want to
+#@ Parameters/hyper-parameters
 
+hidden_size <- 25
+
+# Number of parameters in each matrix
 #@ Add a bias unit!
 
-n1 <- 785*25
-n2 <- 26*10
+n1 <- 785 * hidden_size
+n2 <- (hidden_size + 1) * 10
 
 # Generate enough random values to fill both
 init_params <- runif((n1+n2), min = -epsilon, max = epsilon)
@@ -324,6 +329,9 @@ preds <- predict(init_params, Xval)
 
 sum(preds == yval) / length(yval)
 
+# Which is the same as
+mean(preds == yval)
+
 # We can make this prettier:
 sprintf("Accuracy: %.1f%%", sum(preds == yval) / length(yval) * 100)
 
@@ -408,18 +416,18 @@ compute_grad <- function(params, X, y, lambda) {
     # output layer
     Actual <- diag(10)[y, ]
     
-    D3 <- A3 - Actual
+    Delta3 <- A3 - Actual
     
     # Now we propagate this error backwards to the next layer (backpropagation!)
     
-    D2 <- (D3 %*% Theta2[, -1]) * (sigmoid(Z2) * (1 - sigmoid(Z2)))
+    Delta2 <- (Delta3 %*% Theta2[, -1]) * (sigmoid(Z2) * (1 - sigmoid(Z2)))
     
     # The first layer (the input) doesn't have any error, obviously
     
     # So we can compute the partial derivatives of the unregularised cost
     # function:
-    Delta1 <- t(D2) %*% A1
-    Delta2 <- t(D3) %*% A2
+    Theta1_grad <- (t(Delta2) %*% A1) / m
+    Theta2_grad <- (t(Delta3) %*% A2) / m
     
     # And we compute the partial derivative of the regularisation term (note
     # that the bias terms aren't regularised by convention)
@@ -430,8 +438,8 @@ compute_grad <- function(params, X, y, lambda) {
     
     # So the partial derivatives of the cost function J with respect to each
     # parameter are:
-    Theta1_grad <- Delta1/m + Reg1
-    Theta2_grad <- Delta2/m + Reg2
+    Theta1_grad <- Theta1_grad + Reg1
+    Theta2_grad <- Theta2_grad + Reg2
     
     # Now we just "unroll" these into one long vector of parameters
     c(as.vector(Theta1_grad), as.vector(Theta2_grad))
@@ -479,7 +487,7 @@ optim_out[[2]]
 preds <- predict(nn_params, Xval)
 
 # How well did we do? We assess performance with the cross-validation set
-sprintf("Accuracy: %.1f%%", sum(preds == yval) / length(yval) * 100)
+sprintf("Accuracy: %.1f%%", mean(preds == yval) * 100)
 
 
 # We can have a look at what features the network has learned to look for
@@ -499,13 +507,21 @@ visualise(Theta1[12, -1])
 
 # Generally this is a matter of trial and error!
 
-# We'll set a new value of lambda
+# We'll set a new value of lambda, which might reduce overfitting
 lambda <- 4
-# But we won't fiddle around with the network structure for now (we'd have to
-# re-write some sections of our functions, like make_thetas)
+
+# And we can change the size of the hidden layer - more neurons means the
+# network learns to look for more features, which improves performance but also
+# increases the likelihood of overfitting (and it's more computationally
+# expensive, due to larger matrices!)
+hidden_size <- 50
+
+n1 <- 785 * hidden_size
+n2 <- (hidden_size + 1) * 10
+init_params <- runif((n1+n2), min = -epsilon, max = epsilon)
 
 # Now we can re-train and re-evaluate using the test set (which hasn't
-# been seen by the network yet - so the net won't overfit!)
+# been seen by the network yet - so the net can't overfit it!)
 
 optim_out <- optim(init_params,
                    function(x) compute_cost(x, Xtrain, ytrain, lambda),
