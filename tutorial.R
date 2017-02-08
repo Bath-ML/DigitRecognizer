@@ -166,9 +166,9 @@ make_thetas <- function(paramvec) {
     
     thetas <- list(type = "list", length = 2)
     
-    thetas[[1]] <- matrix(paramvec[1:n1], 25, 785)
+    thetas[[1]] <- matrix(paramvec[1:n1], hidden_size, 785)
     
-    thetas[[2]] <- matrix(paramvec[(n1+1):(n1+n2)], 10, 26)
+    thetas[[2]] <- matrix(paramvec[(n1+1):(n1+n2)], 10, (hidden_size + 1))
     
     thetas
 }
