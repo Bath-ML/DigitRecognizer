@@ -190,6 +190,8 @@ thetas[[2]]
 # causes it to fire a little bit... so that we know how we can make an
 # improvement if we adjust a parameter. So we'll use the "sigmoid" function,
 # which is an improvement over an "on-off" step function ("perceptron").
+# (Also, unlike a step function the sigmoid function can be differentiated -
+# this will be important later!)
 
 sigmoid <- function(z) {
     
@@ -382,7 +384,9 @@ lambda <- 1
 # We train the network by minimising the cost function - which we achieve by
 # adjusting the network's parameters. We use R's "optim" function, and some
 # "anonymous functions" (basically, compute_cost and compute_grad with 3 of the
-# inputs fixed) as arguments:
+# inputs fixed) as arguments. The control paramater "maxit" is the maximum
+# number of iterations (or "training epochs") to perform before returning an
+# answer.
 
 optim_out <- optim(init_params,
                    function(x) compute_cost(x, Xtrain, ytrain, lambda),
