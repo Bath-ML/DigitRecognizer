@@ -20,18 +20,14 @@
 
 
 #===============================================================================
-# Section 0: Getting the data, installing packages ----
+# Section 0: Getting the data ----
 #===============================================================================
 
 # Kaggle competition:
-"https://www.kaggle.com/c/digit-recognizer"
+# https://www.kaggle.com/c/digit-recognizer
 
 # Download CSVs "train.csv" and "test.csv" from here:
-"https://www.kaggle.com/c/digit-recognizer/data"
-
-# Install packages we'll need:
-install.packages("ggplot2", "reshape2")
-
+# https://www.kaggle.com/c/digit-recognizer/data
 
 
 #===============================================================================
@@ -39,7 +35,7 @@ install.packages("ggplot2", "reshape2")
 #===============================================================================
 
 # Read training data from CSV into R
-train <- read.csv("~/Coding/DigitRecognizer/data/train.csv")
+train <- read.csv("data/train.csv")
 
 # Let's have a look
 head(train)
@@ -93,35 +89,29 @@ Xtest <- train[33601:42000, ]
 # We'll make a function to turn the numbers back into an image we can 
 # understand!
 
-# We need the "melt" funciton from reshape2, and we'll use ggplot2 to make a
-# plot
-library(reshape2)
-library(ggplot2)
-
-# Quick demo of melt
-A <- matrix(1:9, 3)
-A
-melt(A)
-
-# Let's make our function!
-
 visualise <- function(imgvec) {
     
     n <- length(imgvec)
     
-    # Reshape into a matrix...
-    img <- matrix(imgvec, sqrt(n))
-    # ... then melt it!
-    imgmelt <- melt(img)
+    # Reshape into a matrix... remember we were reading across rows!
+    img <- matrix(imgvec, sqrt(n), byrow = TRUE)
     
-    ggplot(imgmelt, aes(x = Var1, y = -Var2, fill = value)) +
-        geom_raster() +
-        scale_fill_gradient(low = "white", high = "black")
+    # "Rasterize" into a bitmap image
+    raster <- as.raster(img)
+    
+    plot(raster)
 }
 
 # Now let's have a proper look at some of our data
 visualise(Xtrain[1, ])
 visualise(Xtrain[50, ])
+
+
+
+par(mfrow = c(5, 5), mar = c(0.1, 0.1, 0.1, 0.1))
+
+for (k in 1:25) visualise(Xtrain[k, ])
+
 
 
 
@@ -164,11 +154,10 @@ init_params <- runif((n1+n2), min = -epsilon, max = epsilon)
 
 make_thetas <- function(paramvec) {
     
-    thetas <- list(type = "list", length = 2)
-    
-    thetas[[1]] <- matrix(paramvec[1:n1], hidden_size, 785)
-    
-    thetas[[2]] <- matrix(paramvec[(n1+1):(n1+n2)], 10, (hidden_size + 1))
+    thetas <- list(
+        matrix(paramvec[1:n1], hidden_size, 785),
+        matrix(paramvec[(n1+1):(n1+n2)], 10, (hidden_size + 1))
+    )
     
     thetas
 }
@@ -220,7 +209,7 @@ predict <- function(params, X) {
     Theta2 <- thetas[[2]]
     
     # We'll assign a variable equal to the number of examples we're using
-    m <- dim(X)[1]
+    m <- nrow(X)
     
     
     # Forward propagation!
@@ -261,7 +250,7 @@ sum(preds == yval) / length(yval)
 mean(preds == yval)
 
 # We can make this prettier:
-sprintf("Accuracy: %.1f%%", sum(preds == yval) / length(yval) * 100)
+sprintf("Accuracy: %.1f%%", mean(preds == yval) * 100)
 
 
 
@@ -277,7 +266,7 @@ compute_cost <- function(params, X, y, lambda) {
     thetas <- make_thetas(params)
     Theta1 <- thetas[[1]]
     Theta2 <- thetas[[2]]
-    m <- dim(X)[1]
+    m <- nrow(X)
     
     # Condensed version of the code for forward propagation
     A2 <- sigmoid(cbind(rep(1, m), X) %*% t(Theta1))
@@ -290,10 +279,10 @@ compute_cost <- function(params, X, y, lambda) {
     # Compute the average "difference" between the prediction (the row of A3)
     # and the expected value (the row of Actual). We use log so that as we are
     # further away from correct, the cost becomes exponentially higher.
-    J <- sum(-log(A3) * Actual + -log(1 - A3) * (1 - Actual)) / m
+    J <- sum(-log(A3)*Actual + -log(1 - A3)*(1 - Actual)) / m
     
     # Add regularisation term: we want weights to be small (to prevent
-    # overfitting), we add an averaged "squared weight" to discourage large
+    # overfitting), so we add an averaged "squared weight" to discourage large
     # positive/negative weights. The effect of this term is scaled by lambda -
     # higher lambda penalises large weights more heavily.
     J <- J + lambda * (sum(Theta1[, -1] ^ 2) + sum(Theta2[, -1] ^ 2)) / (2*m)
@@ -323,7 +312,7 @@ compute_grad <- function(params, X, y, lambda) {
     thetas <- make_thetas(params)
     Theta1 <- thetas[[1]]
     Theta2 <- thetas[[2]]
-    m <- dim(X)[1]
+    m <- nrow(X)
     
     # Now we forward-propagate to get the network's output
     A1 <- cbind(rep(1, m), X)
@@ -392,7 +381,8 @@ optim_out <- optim(init_params,
                    function(x) compute_cost(x, Xtrain, ytrain, lambda),
                    function(x) compute_grad(x, Xtrain, ytrain, lambda),
                    method = "L-BFGS-B",
-                   control = list(maxit = 50))
+                   control = list(maxit = 30,
+                                  trace = 1))
 
 # optim returns several outputs in a list. The first is the optimised
 # parameters:
@@ -411,11 +401,13 @@ sprintf("Accuracy: %.1f%%", sum(preds == yval) / length(yval) * 100)
 
 # We can have a look at what features the network has learned to look for
 Theta1 <- make_thetas(nn_params)[[1]]
+Theta1_scaled <- (Theta1 - min(Theta1)) / (max(Theta1) - min(Theta1))
 
-visualise(Theta1[1, ])
-visualise(Theta1[16, ])
+visualise(Theta1_scaled[1, -1])
+visualise(Theta1_scaled[16, -1])
 
-
+par(mfrow = c(5, 5), mar = c(0.1, 0.1, 0.1, 0.1))
+for (k in 1:25) visualise(Theta1_scaled[k, -1])
 
 #===============================================================================
 # Section 8: Improving performance ----
@@ -444,14 +436,15 @@ init_params <- runif((n1+n2), min = -epsilon, max = epsilon)
 # (or if we're going to keep changing the structure of the network it might be
 # worth writing a short function).
 
-# Now we can re-train and re-evaluate using the test set (which hasn't
+# Now we can re-train, and re-evaluate using the test set (which hasn't
 # been seen by the network yet - so the net can't overfit it!)
 
 optim_out <- optim(init_params,
                    function(x) compute_cost(x, Xtrain, ytrain, lambda),
                    function(x) compute_grad(x, Xtrain, ytrain, lambda),
                    method = "L-BFGS-B",
-                   control = list(maxit = 50))
+                   control = list(maxit = 50,
+                                  trace = 1))
 
 nn_params <- optim_out[[1]]
 
@@ -466,7 +459,7 @@ sprintf("Accuracy: %.1f%%", mean(preds == ytest) * 100)
 #===============================================================================
 
 # We'll read in the test dataset from Kaggle
-test <- read.csv("~/Coding/DigitRecognizer/data/test.csv")
+test <- read.csv("data/test.csv")
 
 # We have to do the same transformations as we did for the training set
 Test <- as.matrix(test)
@@ -482,12 +475,11 @@ preds[preds == 10] <- 0
 final <- data.frame(ImageId = c(1:28000), Label = preds)
 
 # Write a CSV
-write.csv(final, file = "~/Coding/DigitRecognizer/data/submission.csv",
-          row.names = FALSE)
+write.csv(final, file = "submission.csv", row.names = FALSE)
 
 
 # URL for submission:
-"https://www.kaggle.com/c/digit-recognizer/submissions/attach"
+# https://www.kaggle.com/c/digit-recognizer/submissions/attach
 
 
 
